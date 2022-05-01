@@ -30,7 +30,7 @@ interface Loopback1
 interface Loopback11
  description LP > Network Services
  vrf forwarding BLU
- ip address 172.17.255.3 255.255.255.255
+ ip address 172.16.3.3 255.255.255.255
 !
 interface GigabitEthernet1
  description UPLINK > WAN01 - Gi2
@@ -47,8 +47,8 @@ interface GigabitEthernet2
  no shutdown
 !
 router bgp 65103
+ timers bgp 3 9
  template peer-policy PP_CAMPUS_UNDERLAY
-  soft-reconfiguration inbound
   send-label
  exit-peer-policy
  !
@@ -58,13 +58,10 @@ router bgp 65103
  !
  template peer-session PS_CAMPUS_UNDERLAY
   remote-as 65103
-  fall-over bfd
  exit-peer-session
  !
  template peer-session PS_CAMPUS_OVERLAY
   remote-as 65103
-  update-source Loopback1
-  timers 3 9
  exit-peer-session
  !
  bgp router-id 10.3.3.3
@@ -74,10 +71,6 @@ router bgp 65103
  neighbor 192.168.111.1 description WAN01 - Gi1
  neighbor 192.168.112.1 inherit peer-session PS_CAMPUS_UNDERLAY
  neighbor 192.168.112.1 description WAN02 - Gi1
- neighbor 10.1.1.1 inherit peer-session PS_CAMPUS_OVERLAY
- neighbor 10.1.1.1 description WAN01 - Lp1
- neighbor 10.2.2.2 inherit peer-session PS_CAMPUS_OVERLAY
- neighbor 10.2.2.2 description WAN02 - Lp1
  !
  address-family ipv4
   redistribute connected route-map RM_CONN->BGP_UND
@@ -88,20 +81,20 @@ router bgp 65103
  exit-address-family
  !
  address-family vpnv4
-  neighbor 10.1.1.1 activate
-  neighbor 10.1.1.1 send-community extended
-  neighbor 10.1.1.1 inherit peer-policy PP_CAMPUS_OVERLAY
-  neighbor 10.2.2.2 activate
-  neighbor 10.2.2.2 send-community extended
-  neighbor 10.2.2.2 inherit peer-policy PP_CAMPUS_OVERLAY
+  neighbor 192.168.111.1 activate
+  neighbor 192.168.111.1 send-community extended
+  neighbor 192.168.111.1 inherit peer-policy PP_CAMPUS_OVERLAY
+  neighbor 192.168.112.1 activate
+  neighbor 192.168.112.1 send-community extended
+  neighbor 192.168.112.1 inherit peer-policy PP_CAMPUS_OVERLAY
  exit-address-family
  !
  address-family ipv4 vrf BLU
-  network 172.17.255.3 mask 255.255.255.255
+  network 172.16.3.3 mask 255.255.255.255
  exit-address-family
 !
 route-map RM_CONN->BGP_UND permit 10
- match interface Loopback1 GigabitEthernet1 GigabitEthernet2
+ match interface GigabitEthernet1 GigabitEthernet2
 !
 line con 0
  exec-timeout 0 0
