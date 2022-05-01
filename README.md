@@ -8,7 +8,7 @@ The configuration files from a blog post I wrote about [MPLS-VPN Option B (Inter
 ![underlay_and_overlay](https://user-images.githubusercontent.com/33333983/166149141-35377403-46cf-4ea5-b466-f7d783829f53.png)
 ![blu_vrf](https://user-images.githubusercontent.com/33333983/166149139-9d536fb0-fe87-4d30-98da-711757ec7a08.png)
 
-The packet capture (*bgp_update_and_ping_capture.pcapng*) shows the BGP update advertising the label (wireshark filter ***bgp.type == 2***) as well as  the MPLS header in the ICMP Packets (wireshark filter ***icmp***). 
+The packet capture (*bgp_update_and_ping_capture.pcapng*) shows the BGP update advertising the label (***bgp.type == 2***) as well as  the MPLS header in the ICMP Packets (***icmp***). 
 
-<img width="1215" alt="ping_core01_to_wan02" src="https://user-images.githubusercontent.com/33333983/166149143-55f6c800-a23d-4c0c-8e5a-13fe3c2e4bc6.png">
 <img width="1211" alt="bgp_update" src="https://user-images.githubusercontent.com/33333983/166149145-df9f9927-fcef-4a20-87d8-332921cf9145.png">
+<img width="1215" alt="ping_core01_to_wan02" src="https://user-images.githubusercontent.com/33333983/166149143-55f6c800-a23d-4c0c-8e5a-13fe3c2e4bc6.png">
