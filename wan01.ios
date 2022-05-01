@@ -1,0 +1,122 @@
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no platform punt-keepalive disable-kernel-core
+platform console serial
+!
+hostname WAN01
+!
+vrf definition BLU
+ rd 10.1.1.1:3001
+ !
+ address-family ipv4
+  route-target export 65103:10003001
+  route-target import 65103:10003001
+ exit-address-family
+!
+no aaa new-model
+clock summer-time BST recurring last Sun Mar 2:00 last Sun Oct 2:00
+!
+no ip domain lookup
+ip domain name stesworld.com
+!
+spanning-tree extend system-id
+!
+username admin privilege 15 password 0 Pa$$w0rd
+!
+interface Loopback1
+ description LP > Routing protocol RID and peerings
+ ip address 10.1.1.1 255.255.255.255
+!
+interface Loopback11
+ description LP > Network Services
+ vrf forwarding BLU
+ ip address 192.168.255.1 255.255.255.255
+!
+interface GigabitEthernet1
+ description UPLINK > WAN01 - Gi1
+ ip address 192.168.110.1 255.255.255.252
+ negotiation auto
+ mpls bgp forwarding
+ no shutdown
+!
+interface GigabitEthernet2
+ description UPLINK > CORE01 - Gi1
+ ip address 192.168.111.1 255.255.255.252
+ negotiation auto
+ mpls bgp forwarding
+ no shutdown
+!
+interface GigabitEthernet3
+ description UPLINK > DC1 - Gi0
+ vrf forwarding BLU
+ ip address 192.168.100.2 255.255.255.252
+ negotiation auto
+ no shutdown
+!
+router bgp 65103
+ template peer-policy PP_CAMPUS_UNDERLAY
+  route-reflector-client
+  soft-reconfiguration inbound
+  send-label
+ exit-peer-policy
+ !
+ template peer-policy PP_CAMPUS_OVERLAY
+  send-community both
+ exit-peer-policy
+ !
+ template peer-session PS_CAMPUS_UNDERLAY
+  remote-as 65103
+  fall-over bfd
+ exit-peer-session
+ !
+ template peer-session PS_CAMPUS_OVERLAY
+  remote-as 65103
+  update-source Loopback1
+  timers 3 9
+ exit-peer-session
+ !
+ bgp router-id 10.1.1.1
+ bgp log-neighbor-changes
+ no bgp default ipv4-unicast
+ neighbor 192.168.110.2 inherit peer-session PS_CAMPUS_UNDERLAY
+ neighbor 192.168.110.2 description WAN02 - Gi1
+ neighbor 192.168.111.2 inherit peer-session PS_CAMPUS_UNDERLAY
+ neighbor 192.168.111.2 description CORE01 - Gi2
+ neighbor 10.2.2.2 inherit peer-session PS_CAMPUS_OVERLAY
+ neighbor 10.2.2.2 description WAN02 - Lp1
+ neighbor 10.3.3.3 inherit peer-session PS_CAMPUS_OVERLAY
+ neighbor 10.3.3.3 description CORE01 - Lp1
+ !
+ address-family ipv4
+  redistribute connected route-map RM_CONN->BGP_UND
+  neighbor 192.168.110.2 activate
+  neighbor 192.168.110.2 inherit peer-policy PP_CAMPUS_UNDERLAY
+  neighbor 192.168.111.2 activate
+  neighbor 192.168.111.2 inherit peer-policy PP_CAMPUS_UNDERLAY
+ exit-address-family
+ !
+ address-family vpnv4
+  neighbor 10.2.2.2 activate
+  neighbor 10.2.2.2 send-community extended
+  neighbor 10.2.2.2 inherit peer-policy PP_CAMPUS_OVERLAY
+  neighbor 10.3.3.3 activate
+  neighbor 10.3.3.3 send-community extended
+  neighbor 10.3.3.3 inherit peer-policy PP_CAMPUS_OVERLAY
+ exit-address-family
+ !
+ address-family ipv4 vrf BLU
+  network 192.168.255.1 mask 255.255.255.255
+  neighbor 192.168.100.1 remote-as 65101
+  neighbor 192.168.100.1 activate
+ exit-address-family
+!
+route-map RM_CONN->BGP_UND permit 10
+ match interface Loopback1 GigabitEthernet1 GigabitEthernet2
+!
+line con 0
+ exec-timeout 0 0
+ privilege level 15
+line vty 0 15
+ privilege level 15
+ login local
+ transport input ssh
